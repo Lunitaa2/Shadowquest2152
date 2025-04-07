@@ -36,28 +36,6 @@ def show_quests():
         print(f" {status}  {q.description}  (reward {q.reward_coins}c)")
 
 
-#where to go...
-def game_map():
-    while True:
-        print("Where would you like to go using the Map?")
-        print("1. Dungeon access in night")
-        print("3.Shop (This is where you can buy health and guns)")
-        print("Exit game")
-        choice=input("enter choice:")
-
-        if choice == "1":
-            dungeon.enter(player)
-        elif choice == "2":
-            shop.display_items()
-            item = input("What do you want to buy? ")
-            shop.buy(player, item)
-        elif choice == "3":
-            print("Maybe next time or not :)")
-            exit()
-        else:
-            print("Invalid choice, please select again.")
-
-
 # ---------------------------------------------------------------------------
 #           MAIN GAME
 # ---------------------------------------------------------------------------

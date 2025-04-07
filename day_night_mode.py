@@ -10,6 +10,19 @@ class DayNightMode:
         else:
             print("Invalid choice! Please enter 'day' or 'night'.")
 
+    # returns the XP multiplier for the current slot
+    def xp_bonus(self):
+        return 1.5 if self.current_time == "night" else 1.0
+
+    # flip the time of day in one call
+    def toggle(self):
+            self.current_time = "night" if self.current_time == "day" else "day"
+            print(f"\n🌗  It is now {self.current_time.upper()}.")
+
+    # how many things the player may do in the current time‑slot
+    def actions_allowed(self):
+        return 3 if self.current_time == "day" else 4
+
     def apply_day_night_effects(self, player, monster):
         """Applies effects based on the time of day."""
         if self.current_time == "night":

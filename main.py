@@ -1,28 +1,40 @@
-import os
+import os, random
 from player import Player
 from monster import Monster
 from fight_system import FightSystem
 from shop import Shop
 from dungeon import Dungeon
 from day_night_mode import DayNightMode
+from quest_system import Quest, QuestSystem
 
-
-
+# ---------------------------------------------------------------------------
+#        WORLD OBJECTS
+# ---------------------------------------------------------------------------
 # Monsters Creation
-goblin_monster = Monster("Goblin", 50, 8, 3)
-
-# System instances
 fight_sys = FightSystem()
-#quest
-#shop
-shop=Shop()
-#dungeon
-dungeon = Dungeon("Dark Dungeon", [goblin_monster])
+shop = Shop()
+day_night = DayNightMode()
+base_mobs = [Monster("Goblin", 50, 8, 3)]
+dungeon = Dungeon("Dark Dungeon", base_mobs)
 
+qs = QuestSystem([
+    Quest("Defeat 5 enemies",   reward_coins=50,  reward_xp=20, required_kills=5),
+    Quest("Defeat 15 enemies",  reward_coins=150, reward_xp=60, required_kills=15),
+])
 
+# ---------------------------------------------------------------------------
+#       HELPER
+# ---------------------------------------------------------------------------
 # System definitions
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
+
+def show_quests():
+    print("\n📜  **Quests**")
+    for q in quests:
+        status = "✓" if q.completed else "…"
+        print(f" {status}  {q.description}  (reward {q.reward_coins}c)")
+
 
 #where to go...
 def game_map():
@@ -46,7 +58,9 @@ def game_map():
             print("Invalid choice, please select again.")
 
 
-#  === MAIN GAME ===
+# ---------------------------------------------------------------------------
+#           MAIN GAME
+# ---------------------------------------------------------------------------
 print("     Welcome to....")
 print("""
    ▄████████    ▄█    █▄       ▄████████ ████████▄   ▄██████▄   ▄█     █▄ 
@@ -93,6 +107,10 @@ while True:
 if input("Press any key to continue or \"x\" to exit").lower() == "x":
     exit()
 
+print('''
+Shadow Quests consist about killing enemies in the dungeon, leveling up, getting items and getting stornger and killing more neemies
+      ''')
+
 clear()
 print('''
                    _     _    _     _
@@ -119,5 +137,63 @@ jgs  /_|_\         \\\\[__]#___][__#]//, \|/
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 '''
 )
-print("Choose where do you wish to go!")
+start_slot = ""
+while start_slot not in ("day", "night"):
+    start_slot = input("Begin at (day/night)? ➜ ").lower()
 
+day_night = DayNightMode(start_slot)
+
+day_count = 1
+
+while player.health > 0:
+    clear()
+    print(f"===================  DAY {day_count}  ({day_night.current_time.upper()})  ===================")
+
+    if input("Would you like to check your stats? (y/n) ➜ ").strip().lower() == "y":
+        player.display_stats()
+
+    actions_left = day_night.actions_allowed()
+
+    # ------------------------------------------------ main turn ------------------------------------------------
+    while actions_left > 0 and player.health > 0:
+        print(f"\n{actions_left} action(s) remaining")
+        print("A) Enter Dungeon")
+        if day_night.is_shop_open():
+            print("B) Visit Shop")
+        print("C) Check Quests")
+        print("E) End the Day early")
+
+        choice = input("➜ ")
+        if choice == "a":
+            dungeon.enter(player, fight_sys, day_night)
+            actions_left -= 1
+        elif choice == "b" and day_night.is_shop_open():
+            shop.display_items()
+            item = input("What do you want to buy? (blank = cancel) ➜ ").title()
+            if item:
+                shop.buy(player, item)
+                actions_left -= 1
+        elif choice == "c":
+            show_quests()
+            actions_left -= 1
+        elif choice == "e":
+            break
+        else:
+            print("Invalid option!")
+
+        # After every combat, check quest completion
+        for q in qs:
+            q.check_completion(player)
+
+        if player.health <= 0:
+            break
+
+    # ------------------------------------------------ day ends ------------------------------------------------
+    if player.health <= 0: break
+    print("\n💤  You take a short rest and regain 10 HP.")
+    player.health = min(player.health + 10, 100 + 20 * (player.level - 1))
+
+    day_night.toggle()          # flip day/night
+    day_count += 1
+
+print("\n=== GAME OVER ===")

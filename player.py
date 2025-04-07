@@ -1,3 +1,5 @@
+from ability import Ability
+from day_night_mode import DayNightMode
 class Player:
     def __init__(self, name):
         self.name = name
@@ -76,7 +78,7 @@ class Player:
 
     def use_item(self, item):
         if item == "Time Amulet":
-            day_night.toggle()
+            DayNightMode.toggle()
             self.inventory.remove(item)
             print("The Time Amulet shatters – reality shifts around you!")
         elif item == "Med Kit":
@@ -85,6 +87,24 @@ class Player:
             print(f"{self.name} heals for 30 HP.")
         else:
             print("Nothing happens…")
+
+    def use_ability(self, enemy):
+        # List abilities and let the player choose one.
+        print("\nChoose an ability:")
+        for idx, ab in enumerate(self.abilities, 1):
+            mana_text = f" (Mana cost: {ab.mana_cost})" if ab.mana_cost > 0 else ""
+            print(f"  {idx}) {ab.name}{mana_text}")
+        choice = input("Select ability number (or press Enter to cancel): ").strip()
+        if choice.isdigit() and 1 <= int(choice) <= len(self.abilities):
+            ability = self.abilities[int(choice) - 1]
+            damage = ability.use(self, enemy)
+            if damage > 0:
+                print(f"{self.name} uses {ability.name} on {enemy.name} for {damage} damage!")
+                enemy.take_damage(damage)
+            return True  # Ability was attempted.
+        else:
+            print("Ability use canceled.")
+            return False
 
     def add_coins(self, amount):
         self.coins += amount

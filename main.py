@@ -31,7 +31,7 @@ def clear():
 
 def show_quests():
     print("\n📜  **Quests**")
-    for q in quests:
+    for q in qs:
         status = "✓" if q.completed else "…"
         print(f" {status}  {q.description}  (reward {q.reward_coins}c)")
 
@@ -141,7 +141,7 @@ start_slot = ""
 while start_slot not in ("day", "night"):
     start_slot = input("Begin at (day/night)? ➜ ").lower()
 
-day_night = DayNightMode(start_slot)
+day_night.set_time(start_slot)
 
 day_count = 1
 
@@ -161,12 +161,17 @@ while player.health > 0:
         if day_night.is_shop_open():
             print("B) Visit Shop")
         print("C) Check Quests")
+        print("I) Check Inventory / Equip armour")
         print("E) End the Day early")
 
-        choice = input("➜ ")
+        choice = input("Choose an option ➜ ").strip().lower()
         if choice == "a":
-            dungeon.enter(player, fight_sys, day_night)
-            actions_left -= 1
+            cost = dungeon.level
+            if actions_left < cost:
+                print(f"Not enough actions to enter the dungeon (requires {cost}).")
+            else:
+                dungeon.enter(player, fight_sys, day_night)
+                actions_left -= cost
         elif choice == "b" and day_night.is_shop_open():
             shop.display_items()
             item = input("What do you want to buy? (blank = cancel) ➜ ").title()
@@ -176,13 +181,17 @@ while player.health > 0:
         elif choice == "c":
             show_quests()
             actions_left -= 1
+        elif choice =="i":
+            print("Inventory:", ", ".join(player.inventory) if player.inventory else "Empty")
+            if input("Do you want to equip an armour item? (y/n) ➜ ").strip().lower() == "y":
+                player.equip_armour()
         elif choice == "e":
             break
         else:
             print("Invalid option!")
 
         # After every combat, check quest completion
-        for q in qs:
+        for q in qs.quests:
             q.check_completion(player)
 
         if player.health <= 0:
@@ -194,6 +203,8 @@ while player.health > 0:
     player.health = min(player.health + 10, 100 + 20 * (player.level - 1))
 
     day_night.toggle()          # flip day/night
-    day_count += 1
+
+    day_count += 0.5
+    
 
 print("\n=== GAME OVER ===")
